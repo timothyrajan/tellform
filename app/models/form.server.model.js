@@ -26,12 +26,12 @@ var FormSchema = new Schema({
 		type: Date,
 		default: Date.now
 	},
-	title: {
+	name: {
 		type: String,
 		default: '',
 		trim: true,
 		unique: true,
-		required: 'Title cannot be blank'
+		required: 'name cannot be blank'
 	},
 	description: {
 		type: String,
@@ -83,11 +83,11 @@ FormSchema.pre('save', function (next) {
 FormSchema.pre('save', function (next) {
 
 	if(this.pdf){
-		if(this.pdf.modified){
+		if(this.isModified('pdf')){
 
-			var new_filename = this.pdf.title.trim()+'_template.pdf';
+			var new_filename = this.pdf.name.trim()+'_template.pdf';
 
-		    var newDestination = path.join(config.pdfUploadPath, this.pdf.title.trim()),
+		    var newDestination = path.join(config.pdfUploadPath, this.pdf.name.trim()),
 		    	stat = null;
 
 		    try {
@@ -136,7 +136,7 @@ FormSchema.pre('remove', function (next) {
 FormSchema.pre('save', function (next) {
 	var field, _form_fields; 
 	
-	if(this.isGenerated && this.pdf){
+	if(this.isGenerated && this.pdf && this.isModified('pdf')){
 
 		var _typeConvMap = {
 			'Multiline': 'textarea',
@@ -163,7 +163,7 @@ FormSchema.pre('save', function (next) {
 						field.fieldType = _typeConvMap[ field.fieldType+'' ];
 					}
 
-					field.fieldValue = '';
+					field.value = '';
 					field.created = Date.now();
 					field.required = true;
     				field.disabled  = false;
@@ -201,8 +201,8 @@ FormSchema.pre('save', function (next) {
 });
 
 FormSchema.methods.convertToFDF = function (cb) {
-	var _keys = _.pluck(this.form_fields, 'title'),
-		_values = _.pluck(this.form_fields, 'fieldValue');
+	var _keys = _.pluck(this.form_fields, 'name'),
+		_values = _.pluck(this.form_fields, 'value');
 
 	_values.forEach(function(val){
 		if(val === true){

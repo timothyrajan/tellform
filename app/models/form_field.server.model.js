@@ -42,16 +42,13 @@ var FormFieldSchema = new Schema({
 		type: Date,
 		default: Date.now
 	},
-	title: {
+	name: {
 		type: String,
 		default: '',
 		trim: true,
 		required: 'Title cannot be blank'
 	},
-	description: {
-		type: String,
-		default: '',
-	},
+	value: Schema.Types.Mixed,
 	required: {
 		type: Boolean,
 		default: true,
@@ -65,8 +62,6 @@ var FormFieldSchema = new Schema({
 		required: 'Field type cannot be blank',
 		validate: [validateFormFieldType, 'Invalid field type']
 	},
-	fieldValue: Schema.Types.Mixed
-
 });
 
 module.exports = FormFieldSchema;

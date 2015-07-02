@@ -145,14 +145,13 @@ exports.createSubmission = function(req, res) {
 exports.listSubmissions = function(req, res) {
 	var _form = req.form;
 
-	FormSubmission.find({ form: req.form }).populate('admin', 'form').exec(function(err, submissions) {
+	FormSubmission.find({ form: req.form }).populate('admin.username').exec(function(err, submissions) {
 		if (err) {
 			console.log(err);
 			res.status(500).send({
 				message: errorHandler.getErrorMessage(err)
 			});
 		} else {
-			console.log('hello');
 			res.json(submissions);
 		}
 	});
@@ -168,15 +167,73 @@ exports.update = function(req, res) {
 	form = _.extend(form, req.body);
 	form.admin = req.user;
 
-	form.save(function(err) {
-		if (err) {
-			console.log(err);
-			res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
+	//If any form fields are changed, update submissions 
+	async.waterfall([ 
+		function(callback){
+			if(req.form.form_fields !== form.form_fields){
+				FormSubmission.find({ form: req.form }).exec(function(err, submissions) {
+					if (err) {
+						callback(err);
+					} else {
+						//DAVID: TODO: We are doing this at O(n^2). Seems like we could improve efficiency somehow
+						var updateSubmission = function (submission, callback) {
+							var old_fields = submissions.form_fields;
+							var new_fields = req.form.form_fields;
+
+							//Zip the new_fields with old_fieds (order matters here because of _.merge)
+							var field_sort = _.zip(new_fields, old_fields);
+							for(var x = 0; x < field_sort.length; x++){
+								var field_pair = field_sort[x];
+								if(field_pair.length === 2){
+									//Merge new and old form fields together
+									submission.form_fields[x] = _.merge(field_pair[0], field_pair[1]);
+								}
+							}
+
+							//Save submissions after updating sumbission.form_fields
+							submission.save(function(err){
+								if (err) {
+									// console.error(err);
+									callback(err);
+								} else {
+									callback(null);
+									// console.log('Form Submission CREATED');
+									// res.status(200).send('Form submission successfully saved');
+								}            
+							});	
+						};
+
+						async.each(submissions, updateSubmission, function(err){
+							callback(null);
+						});
+					}
+				});
+			}
+			callback(null);
+		},
+		function(callback){
+			form.save(function(err) {
+				if (err) {
+					callback(err);
+					// console.log(err);
+					// res.status(400).send({
+					// 	message: errorHandler.getErrorMessage(err)
+					// });
+				} else {
+					callback(err, form);
+				}
 			});
-		} else {
-			console.log('updated form');
-			res.json(form);
+		}
+	], function(err, result){
+		if(err){
+			console.log(err);
+			res.status(500).send({
+				message: err.message
+			});
+		}else {
+			res.status(200).send({
+				message: 'Form successfully updated'
+			});
 		}
 	});
 };

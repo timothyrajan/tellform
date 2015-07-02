@@ -27,7 +27,7 @@ angular.module('forms').run(['Menus',
 
 			var valid_count = fields.filter(function(field){
 				if(typeof field === 'object'){
-				    return !!(field.fieldValue);
+				    return !!(field.value);
 				}
 			}).length;
 			return valid_count;

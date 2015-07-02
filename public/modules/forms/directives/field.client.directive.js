@@ -41,7 +41,7 @@ angular.module('forms').directive('fieldDirective', function($http, $compile) {
     };
 
     return {
-        template: '<div>{{field.title}}</div>',
+        template: '<div>{{field.name}}</div>',
         restrict: 'E',
         scope: {
             field: '='

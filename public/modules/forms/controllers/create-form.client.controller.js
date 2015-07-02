@@ -146,7 +146,7 @@ angular.module('forms').controller('EditFormController', ['$scope', '$state', '$
             var newField = {
                 'title' : 'New field - ' + ($scope.addField.lastAddedID),
                 'fieldType' : $scope.addField.new,
-                'fieldValue' : '',
+                'value' : '',
                 'required' : true,
     			'disabled' : false
             };

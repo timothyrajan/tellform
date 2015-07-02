@@ -6,40 +6,56 @@ angular.module('forms').controller('ViewFormController', ['$scope', '$stateParam
 
         // view form submissions
         $scope.form = CurrentForm.getForm();
-        $scope.submissions = undefined;
+        $scope.submissions = [];
         $scope.viewSubmissions = false;
+        $scope.table = {
+            'rows': [],
+            'masterChecker': false,
+        };
 
+
+        //Table Methods
+        $scope.table.toggleAllCheckers = function(masterChecker){
+            for(var i=0; i<$scope.table.rows.length; i++){
+                $scope.table.rows[i].selected = $scope.table.masterChecker;
+            }
+        }
+        $scope.table.toggleCheckerSelection = function($event, description) {
+            $event.stopPropagation();
+            console.log('checkbox clicked');
+        }
+        $scope.table.rowClicked = function(obj) {
+           console.log('row clicked');
+           obj.selected = !obj.selected;
+        };
 
         //show submissions of Form
         $scope.showSubmissions = function(){
         	$scope.viewSubmissions = true;
-            if(!$scope.submissions){
+            if(!$scope.submissions.length !== 0){
                 $http.get('/forms/'+$scope.form._id+'/submissions')
                     .success(function(data, status, headers){
                         console.log(data);
                         $scope.submissions = data;
+                        $scope.table.rows = data;
+                        for(var i=0;i<$scope.table.rows.length; i++){
+                            $scope.table.rows[i].selected = false;
+                        }
                         console.log('form submissions successfully fetched');
+                        if(!$scope.$$phase){
+                            $scope.$apply();
+                        }
                     })
                     .error(function(err){
                         console.log('Could not fetch form submissions.\nError: '+err);
                     });            
-            } else if(!$scope.submissions.length){
-                $http.get('/forms/'+$scope.form._id+'/submissions')
-                    .success(function(data, status, headers){
-                        $scope.submissions = data;
-                        console.log('form submissions successfully fetched');
-                    })
-                    .error(function(err){
-                        console.log('Could not fetch form submissions.\nError: '+err);
-                    });
             }
-            console.log($scope.submissions);
-        }
+        };
 
         //hide submissions of Form
         $scope.hideSubmissions = function(){
         	$scope.viewSubmissions = false;
-        }
+        };
 
 		// Return all user's Forms
 		$scope.findAll = function() {
@@ -56,11 +72,8 @@ angular.module('forms').controller('ViewFormController', ['$scope', '$stateParam
 
         // Remove existing Form
         $scope.remove = function() {
-            console.log('hello');
-            var form = CurrentForm.getForm()
-            if(!form){
-                form = $scope.form
-            }
+            var form = CurrentForm.getForm() || $scope.form;
+
             $http.delete('/forms/'+$scope.form._id)
                 .success(function(data, status, headers){
                     console.log('form deleted successfully');
@@ -70,7 +83,6 @@ angular.module('forms').controller('ViewFormController', ['$scope', '$stateParam
                     console.log('ERROR: Form could not be deleted.');
                     console.error(error);
                 });
-
         };
 	}
 ]);
